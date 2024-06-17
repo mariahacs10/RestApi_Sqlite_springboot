@@ -1,0 +1,34 @@
+6/17/2024
+
+I had soo many issues, trying to host this application and i was doing so many things wrong.
+
+One of the MAIN issue i had was, i was doing the self sighed certificate and the https logic
+note to self you do NOT need that because render already handles https request, i had to
+delete some things in the applications.properties to revert it back to http, and also delete the .p12 file aka the signed certificate
+and then it worked.
+
+But Heres how i Hosted my pushed docker image from docker hub to render!.
+
+
+Step 1.Make sure you have the image up and loaded
+
+Step 2. In react render go to dashboard
+
+Step 3.Click on New +, then Web service
+
+Step 4.Select Deploy an existing image from a registry
+
+Step 5.in the Image URL, you want to paste the full url from the Dockerhub for example:
+
+You want to do this:
+
+mlallencodes499/artworkdockerimage:v1
+
+Not this:
+
+mlallencodes499/artworkdockerimage
+
+Step 6.Make sure you select the free tier and you should be good to go
+
+Step 7.After its done building wait 30 seconds or so and then check the url, make sure it runs in postman and through the browser
+then its all done!.

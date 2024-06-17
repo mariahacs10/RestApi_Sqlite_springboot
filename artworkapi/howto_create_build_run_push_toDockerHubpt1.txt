@@ -1,0 +1,61 @@
+6/17/2024
+
+I faced sooo many errors and re-doing my project, But now i FINALLY got it hosted and running :).
+
+Heres how to create,build,run then push the Docker file to docker hub, In the next set of notes we will talk 
+about how to host the image we pushed from docker hub to Render.
+
+
+Step 1.Make sure your application is ready, built and runs locally, Then you want to generate your jar file
+using mvnw clean package in the cmd line.
+
+Step 2.After generating the jar file you want to create the Dockerfile (⬅just like that) in the root directory
+of your project.
+
+Step 3. In the Dockerfile add this same exact thing:
+
+FROM openjdk:17-jdk AS build
+COPY . /app
+WORKDIR /app
+RUN ./mvnw clean package -DskipTests
+
+FROM openjdk:17-jdk-slim
+COPY --from=build /app/target/artworkapi-0.0.1-SNAPSHOT.jar /app/artworkapi.jar
+
+VOLUME /app/sqlite-data
+
+WORKDIR /app
+ENTRYPOINT ["java", "-jar", "artworkapi.jar"]
+
+(Remember to change the name of the artworkapi-0.0.1-SNAPSHOT.jar to what your generated jar file name was
+you can check this by going to target.)
+
+Step 4.Save the Dockerfile and restart the application
+
+Step 5.Now in the command line navigate to the main root directory in your application, which is artworkapi (or whatever
+name you called your app), And put in the command line docker build -t yourdockerimagename, watch it generate all the lines
+you added in the Dockerfile and that should be a success.
+
+Step 6.After building the dockerimage, you should go into Docker desktop and see the generated image.
+
+Step 7.You need to run the docker image, so open a new cmd line and type in --> docker run -p 8080:8080 yourdockerimage
+                                                                                  (REMEMBER USE YOUR PORT!)
+                                                                                  
+heres how the line would look like filled out: docker run -p 8686:8686 artworkdockerimage
+
+Step 8.After running it you should be able to see the spring boot application running in the command line
+
+Step 9.PUSHING!, You want to open a new command line and do --> docker login, Make sure you've logged into your 
+docker hub account on the Browser and in the command line.
+
+Step 10.In the same command line you want to tag the docker image first before pushing use this line:
+
+docker tag artworkdockerimage mlallencodes/artworkdockerimage:v1
+
+Step 11.push the docker tag to docker hub using:
+
+docker push mlallencodes/artworkdockerimage:v1
+
+Step 12. Go to the Docker hub on the browser and you should see the docker image like this:
+
+https://hub.docker.com/
