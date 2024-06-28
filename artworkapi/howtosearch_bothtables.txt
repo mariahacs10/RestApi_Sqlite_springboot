@@ -1,0 +1,255 @@
+6/28/2024
+
+The only error i occurred i this portion of the code was:
+rg.springframework.beans.factory.UnsatisfiedDependencyException: Error 
+creating bean with name 'artworkapiApplication': Unsatisfied dependency 
+expressed through constructor parameter 0: Error creating bean with name
+ 'animeConventionRepository' defined in 
+com.example.artworkapi.model.AnimeConventionRepository defined in 
+@EnableJpaRepositories declared on 
+JpaRepositoriesRegistrar.EnableJpaRepositoriesConfiguration: Could not 
+create query for public abstract java.util.List 
+com.example.artworkapi.model.AnimeConventionRepository.searchAnimeConventionArts(java.lang.String,java.lang.String);
+ Reason: Using named parameters for method public abstract 
+java.util.List 
+com.example.artworkapi.model.AnimeConventionRepository.searchAnimeConventionArts(java.lang.String,java.lang.String)
+ but parameter 'Optional[apiKey]' not found in annotated query 'SELECT a
+ FROM AnimeConventionArt a WHERE LOWER(a.animeConventionImageUrl) LIKE 
+LOWER(CONCAT('%', :query, '%')) OR LOWER(a.animeConventionDescription) 
+LIKE LOWER(CONCAT('%', :query, '%'))'
+
+---------------------------------------------------------------------------------------------------------------------------------
+
+here are the step by steps on how to search for 2 tables.
+
+Step 1.Create a search result class in the com.example.artworkapi package, this will be what you can search for like the
+artworks description and image, and the animeconvention images:
+public class SearchResult {
+    private String type;
+    private Long id;
+    private String imageUrl;
+    private String description;
+
+    // Default constructor
+    public SearchResult() {
+    }
+
+    // Constructor with all fields
+    public SearchResult(String type, Long id, String imageUrl, String description) {
+        this.type = type;
+        this.id = id;
+        this.imageUrl = imageUrl;
+        this.description = description;
+    }
+
+    // Getters
+    public String getType() {
+        return type;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    // Setters
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    // Optional: Override toString() method for easier debugging
+    @Override
+    public String toString() {
+        return "SearchResult{" +
+                "type='" + type + '\'' +
+                ", id=" + id +
+                ", imageUrl='" + imageUrl + '\'' +
+                ", description='" + description + '\'' +
+                '}';
+    }
+}
+
+step 2.In the model package modify the AnimeConventionRepository and ErikasArtWorkRepositorys to handle the apikey logic
+also to handle what you can search for
+
+AnimeConventionRepository:
+public interface AnimeConventionRepository extends JpaRepository<AnimeConventionArt, Long> {
+    @Query("SELECT a FROM AnimeConventionArt a WHERE " +
+            "LOWER(a.animeConventionImageUrl) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(a.animeConventionDescription) LIKE LOWER(CONCAT('%', :query, '%'))")
+    List<AnimeConventionArt> searchAnimeConventionArts(@Param("query") String query);
+
+    @Query("SELECT a FROM AnimeConventionArt a")
+    List<AnimeConventionArt> findAllAnime();
+}
+
+ErikasArtWorkRepository:
+public interface ErikasArtWorkRepository extends JpaRepository<ErikasArtWork, Long> {
+    @Query("SELECT e FROM ErikasArtWork e WHERE " +
+            "LOWER(e.authorImageUrl) LIKE LOWER(CONCAT('%', :query, '%'))")
+    List<ErikasArtWork> searchErikasArtWorks(@Param("query") String query);
+
+    @Query("SELECT e FROM ErikasArtWork e")
+    List<ErikasArtWork> findAllArtWork();
+}
+
+Step 3. Create a SearchService in the service package its responsible for coordinating and aggregating search operations across 
+multiple data sources (in this case, AnimeConventionArt and ErikasArtWork). It acts as an intermediary between the repositories
+(data access layer) and the controller (presentation layer).
+
+@Service
+public class SearchService {
+	private final AnimeConventionRepository animeConventionRepository;
+    private final ErikasArtWorkRepository erikasArtWorkRepository;
+
+    public SearchService(AnimeConventionRepository animeConventionRepository, 
+                         ErikasArtWorkRepository erikasArtWorkRepository) {
+        this.animeConventionRepository = animeConventionRepository;
+        this.erikasArtWorkRepository = erikasArtWorkRepository;
+    }
+
+    public List<SearchResult> getAllItems() {
+        List<SearchResult> results = new ArrayList<>();
+        results.addAll(animeConventionRepository.findAllAnime().stream()
+                .map(this::convertToSearchResult)
+                .collect(Collectors.toList()));
+        results.addAll(erikasArtWorkRepository.findAllArtWork().stream()
+                .map(this::convertToSearchResult)
+                .collect(Collectors.toList()));
+        return results;
+    }
+
+    public List<SearchResult> searchAllItems(String query) {
+        List<SearchResult> results = new ArrayList<>();
+        results.addAll(animeConventionRepository.searchAnimeConventionArts(query).stream()
+                .map(this::convertToSearchResult)
+                .collect(Collectors.toList()));
+        results.addAll(erikasArtWorkRepository.searchErikasArtWorks(query).stream()
+                .map(this::convertToSearchResult)
+                .collect(Collectors.toList()));
+        return results;
+    }
+    
+    private SearchResult convertToSearchResult(AnimeConventionArt art) {
+        return art != null ? new SearchResult("AnimeConventionArt", art.getAnimeConventionId(), 
+                art.getAnimeConventionImageUrl(), art.getAnimeConventionDescription()) : null;
+    }
+
+    private SearchResult convertToSearchResult(ErikasArtWork art) {
+        return art != null ? new SearchResult("ErikasArtWork", art.getArtWorkId(), 
+                art.getAuthorImageUrl(), null) : null;
+    }
+}
+
+Step 4.Create a SearchController class in the web package its a crucial component in your application's web API layer, 
+specifically handling search-related HTTP requests. It acts as an interface between the client (e.g., a web browser or mobile app)
+and the search functionality implemented in the SearchService.
+
+@RestController
+@RequestMapping("/api/search")
+@CrossOrigin("https://react-carsandboats.onrender.com/")
+public class SearchController {
+    private final SearchService searchService;
+
+    public SearchController(SearchService searchService) {
+        this.searchService = searchService;
+    }
+
+    @GetMapping
+    public List<SearchResult> search(
+            @RequestParam(required = false) String query) {
+        if (query == null || query.isEmpty()) {
+            return searchService.getAllItems();
+        } else {
+            return searchService.searchAllItems(query);
+        }
+    }
+}
+
+Step 5. dont forget in the ApiKeyFilter you have to change some of the logic:
+
+
+@Component
+public class ApiKeyFilter extends OncePerRequestFilter {
+    private final ApiKeyService apiKeyService;
+    private static final Logger log = LoggerFactory.getLogger(ApiKeyFilter.class);
+
+    public ApiKeyFilter(ApiKeyService apiKeyService) {
+        this.apiKeyService = apiKeyService;
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
+        String apiKey = request.getHeader("X-Api-Key");
+        log.info("Received API key: {}", apiKey);
+
+        if (apiKey != null && !apiKey.isEmpty()) {
+            if (isSearchRequest(request)) {
+                if (apiKeyService.validateApiKey(apiKey)) {
+                    setSearchAuthentication(apiKey, request);
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+            } else if (isArtworkRequest(request)) {
+                if (apiKeyService.validateArtworkApiKey(apiKey)) {
+                    setAuthentication(apiKey, "apiKey");
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+            } else {
+                if (apiKeyService.validateApiKey(apiKey)) {
+                    setAuthentication(apiKey, "apiKey");
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+            }
+        }
+
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.getWriter().write("Invalid API key.");
+    }
+
+    private boolean isArtworkRequest(HttpServletRequest request) {
+        String requestUrl = request.getRequestURI();
+        return requestUrl.startsWith("/erikasArtWork");
+    }
+
+    private boolean isSearchRequest(HttpServletRequest request) {
+        String requestUrl = request.getRequestURI();
+        return requestUrl.startsWith("/api/search");
+    }
+
+    private void setAuthentication(String apiKey, String authority) {
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(apiKey, null, 
+            Collections.singletonList(new SimpleGrantedAuthority(authority)));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    private void setSearchAuthentication(String apiKey, HttpServletRequest request) {
+        String authority = isArtworkRequest(request) ? "erikasArtWorkApiKey" : "animeConventionApiKey";
+        setAuthentication(apiKey, authority);
+    }
+}
+
+Step 6. In the SecurityConfig class add this line:
+	                 .requestMatchers("/api/search/**").hasAnyAuthority("animeConventionApiKey", "erikasArtWorkApiKey")

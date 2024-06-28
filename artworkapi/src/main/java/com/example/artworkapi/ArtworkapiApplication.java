@@ -7,11 +7,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.example.artworkapi.domain.AnimeConventionArt;
-import com.example.artworkapi.domain.AppUser;
+import com.example.artworkapi.domain.ErikasArtWork;
 import com.example.artworkapi.model.AnimeConventionRepository;
-import com.example.artworkapi.model.AppUserRepository;
+import com.example.artworkapi.model.ErikasArtWorkRepository;
 import com.example.artworkapi.service.ApiKeyService;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.annotation.PostConstruct;
 
 //indicates that this is a spring boot application
@@ -25,31 +26,33 @@ public class ArtworkapiApplication implements CommandLineRunner
 	 // Repository for accessing anime convention artwork data
 	private final AnimeConventionRepository animeRepository;
 	
-	 // Uncomment if you have another repository for Erika's artwork
-	//private final ErikasArtWorkRepository artWorkRepository;
+	private final ErikasArtWorkRepository artWorkRepository;
 	
 	// Service for managing API keys
     private final ApiKeyService apiKeyService;
     
     // Constructor for dependency injection of the repositories and service
-	public ArtworkapiApplication(AnimeConventionRepository animeRepository, ApiKeyService apiKeyService) {
+	public ArtworkapiApplication(AnimeConventionRepository animeRepository, ApiKeyService apiKeyService, ErikasArtWorkRepository artWorkRepository) {
 		this.animeRepository = animeRepository;
 		//this.artWorkRepository = artWorkRepository;
 		this.apiKeyService = apiKeyService;
+		this.artWorkRepository = artWorkRepository;
 	}
 
 	// Main method to launch the Spring Boot application
 	public static void main(String[] args) {
+		Dotenv.load();
 		SpringApplication.run(ArtworkapiApplication.class, args);
 	}
 	
     // Method annotated with @PostConstruct to execute after the bean initialization
 	@PostConstruct
-	 public void initApiKeys() {
-		  // Generate an API key using the ApiKeyService
-	      String apiKey = apiKeyService.generateApiKey();
-	      // Print the generated API key to the console
-	      System.out.println("Generated  api key: " + apiKey);
+	  public void initApiKeys() {
+		      String apiKey = apiKeyService.generateArtworkApiKey();
+		      System.out.println("Generated ART api key: " + apiKey);
+		      
+		      String apiKey2 = apiKeyService.generateApiKey();
+		      System.out.println("Generated API key: " + apiKey2);
 	}
 
 	// Overridden method from CommandLineRunner to execute code after application startup
@@ -78,6 +81,23 @@ public class ArtworkapiApplication implements CommandLineRunner
 		String animePhoto19 = "https://i.ibb.co/y8S82w1/animephoto19.jpg";
 		String animePhoto20 = "https://i.ibb.co/Q62byf8/animephoto20.jpg";
 		
+		  
+	    String jjkImage1 = "https://i.postimg.cc/3rtbd3v4/jjkimage1.jpg";
+	    String jjkImage2 = "https://i.postimg.cc/MKX3Bg7s/jjkimage2.jpg";
+	    String jjkImage3 = "https://i.postimg.cc/m2qXyVVT/jjkimage3.jpg";
+	    String jjkImage4 = "https://i.postimg.cc/pLF0G81z/jjkimage4.jpg";
+	    String jjkImage5 = "https://i.postimg.cc/g0bgfJf5/jjkimage5.jpg";
+	    String jjkImage6 = "https://i.postimg.cc/NMgpjnGk/jjkimage6.jpg";
+	    String jjkImage7 = "https://i.postimg.cc/3Rn94Zd5/jjkimage7.jpg";
+	    String jjkImage8 = "https://i.postimg.cc/ZnnHryd9/jjkimage8.jpg";
+	    String jjkImage9 = "https://i.postimg.cc/nLK3ZxxL/jjkimage9.jpg";
+	    String jjkImage10 = "https://i.postimg.cc/X7ZxqdWm/jjkimage10.jpg";
+	    String jjkImage11 = "https://i.postimg.cc/ZYsVJjG6/jjkimage11.jpg";
+	    String jjkImage12 = "https://i.postimg.cc/1XdHM5Gv/jjkimage12.jpg";
+	    String jjkImage13 = "https://i.postimg.cc/c4VhnC4H/jjkimage13.jpg";
+		
+		
+		
 		// Save the anime photos along with their descriptions into the repository
 		animeRepository.save(new AnimeConventionArt(animePhoto1, "aaron goofy pic"));
 		animeRepository.save(new AnimeConventionArt(animePhoto2, "Group Photo 1"));
@@ -100,5 +120,21 @@ public class ArtworkapiApplication implements CommandLineRunner
 		animeRepository.save(new AnimeConventionArt(animePhoto19, "Group Photo 2"));
 		animeRepository.save(new AnimeConventionArt(animePhoto20, "Random person picture, Mariah and Erika"));	
 
+		 artWorkRepository.save(new ErikasArtWork(jjkImage1));
+	     artWorkRepository.save(new ErikasArtWork(jjkImage2));
+	     artWorkRepository.save(new ErikasArtWork(jjkImage3));
+	     artWorkRepository.save(new ErikasArtWork(jjkImage4));
+	     artWorkRepository.save(new ErikasArtWork(jjkImage5));
+	     artWorkRepository.save(new ErikasArtWork(jjkImage6));
+	     artWorkRepository.save(new ErikasArtWork(jjkImage7));
+	     artWorkRepository.save(new ErikasArtWork(jjkImage8));
+	     artWorkRepository.save(new ErikasArtWork(jjkImage9));
+	     artWorkRepository.save(new ErikasArtWork(jjkImage10));
+	     artWorkRepository.save(new ErikasArtWork(jjkImage11));
+	     artWorkRepository.save(new ErikasArtWork(jjkImage12));
+	     artWorkRepository.save(new ErikasArtWork(jjkImage13));
+	       
+		
+		
 	}
 }

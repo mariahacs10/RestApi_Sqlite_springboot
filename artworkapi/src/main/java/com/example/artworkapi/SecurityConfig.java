@@ -75,6 +75,8 @@ public class SecurityConfig {
 	             authorizeHttpRequests
 	             	 // Requires 'apiKey' authority for endpoints under /animeConvention/**
 	                 .requestMatchers("/animeConvention/**").hasAuthority("apiKey")
+	                 .requestMatchers("/erikasArtWork/**").hasAnyAuthority("apiKey")
+	                 .requestMatchers("/api/search/**").hasAnyAuthority("animeConventionApiKey", "erikasArtWorkApiKey")
 	                 // All other requests require authentication
 	                 .anyRequest().authenticated())
 	       // Enables CORS with default settings
@@ -83,6 +85,8 @@ public class SecurityConfig {
 	     // Builds the security filter chain
 	     return http.build();
 	 }
+	 
+	 
 	 
 	// Defines a bean for CORS configuration source
 	 @Bean
