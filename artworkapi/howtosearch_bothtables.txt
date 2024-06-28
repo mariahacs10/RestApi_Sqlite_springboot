@@ -18,6 +18,11 @@ com.example.artworkapi.model.AnimeConventionRepository.searchAnimeConventionArts
 LOWER(CONCAT('%', :query, '%')) OR LOWER(a.animeConventionDescription) 
 LIKE LOWER(CONCAT('%', :query, '%'))'
 
+--------------------------------------------------------------------------------------------------------------------------------
+
+Another thing is this implementation is for 2 api keys because orginally i was going to create 2 seperate searchs
+for AnimeConventionart and ErikasArt.
+
 ---------------------------------------------------------------------------------------------------------------------------------
 
 here are the step by steps on how to search for 2 tables.
