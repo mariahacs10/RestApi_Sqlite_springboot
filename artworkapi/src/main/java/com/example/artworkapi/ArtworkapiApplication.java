@@ -12,7 +12,6 @@ import com.example.artworkapi.model.AnimeConventionRepository;
 import com.example.artworkapi.model.ErikasArtWorkRepository;
 import com.example.artworkapi.service.ApiKeyService;
 
-import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.annotation.PostConstruct;
 
 //indicates that this is a spring boot application
@@ -41,7 +40,6 @@ public class ArtworkapiApplication implements CommandLineRunner
 
 	// Main method to launch the Spring Boot application
 	public static void main(String[] args) {
-		Dotenv.load();
 		SpringApplication.run(ArtworkapiApplication.class, args);
 	}
 	

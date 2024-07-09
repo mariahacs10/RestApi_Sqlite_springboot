@@ -26,19 +26,15 @@ public class AppUser {
  @Column(nullable = false)
  private String password;
  
- // Specifies that this column is not nullable
- @Column(nullable = false)
- private String role;
  
  // Default constructor required by JPA
  public AppUser() {
  }
  
  // Constructor to initialize the entity with username, password, and role
- public AppUser(String username, String password, String role) {
+ public AppUser(String username, String password) {
      this.username = username;
      this.password = password;
-     this.role = role;
  }
  
  // Getter method for the primary key field
@@ -71,13 +67,5 @@ public class AppUser {
      this.password = password;
  }
  
- // Getter method for the role field
- public String getRole() {
-     return role;
- }
  
- // Setter method for the role field
- public void setRole(String role) {
-     this.role = role;
- }
 }
