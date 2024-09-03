@@ -1,0 +1,426 @@
+7/10/2024
+
+Here are the Step by steps on how to add favorite functionality
+
+Step 1.Create a new Favorite entity:
+
+This entity represents a user's favorite image association.
+It has two foreign keys:
+
+    image_id references an All_Images entity (the image itself).
+    user_id references an AppUser entity (the user who favorited it).
+
+@Entity
+@Table(name = "favorites")
+public class Favorite {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "image_id")
+    private All_Images image;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private AppUser user;
+
+    // Default constructor
+    public Favorite() {
+    }
+
+    // Constructor with fields
+    public Favorite(All_Images image, AppUser user) {
+        this.image = image;
+        this.user = user;
+    }
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public All_Images getImage() {
+        return image;
+    }
+
+    public void setImage(All_Images image) {
+        this.image = image;
+    }
+
+    public AppUser getUser() {
+        return user;
+    }
+
+    public void setUser(AppUser user) {
+        this.user = user;
+    }
+
+    // toString method for debugging
+    @Override
+    public String toString() {
+        return "Favorite{" +
+                "id=" + id +
+                ", image=" + (image != null ? image.getAllImagesId() : null) +
+                ", user=" + (user != null ? user.getId() : null) +
+                '}';
+    }
+
+    // equals and hashCode methods
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Favorite)) return false;
+        Favorite favorite = (Favorite) o;
+        return getId() != null && getId().equals(favorite.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
+}
+
+Step 2.Modify the All_Images entity to include a reference to the Favorite entity:
+
+By adding a reference to the Favorite entity within the All_Images entity, you're essentially
+creating a link between individual images and the favorites list. This reference can be like a 
+flag or a marker that tells your application whether a particular image is marked as a favorite.
+
+//Marks this class as a JPA entity, so it will be mapped to a database table
+@Entity
+//Specifies the name of the table in the database that this entity will be mapped to
+@Table(name="all images table")
+public class All_Images {
+
+	 // Marks this field as the primary key of the entity
+	@Id
+	// Specifies that the primary key value will be generated automatically
+	@GeneratedValue
+	private Long allImagesId;
+	
+	// Field to store the URL of the anime convention image
+    private String allImageUrl;
+    private String allImageDescriptions;
+    @OneToMany(mappedBy = "image", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Favorite> favorites = new HashSet<>();
+    
+    
+    // Constructor to initialize the entity with an image URL and description
+	public All_Images(String allImageUrl, String allImageDescriptions)
+	{
+		this.allImageUrl = allImageUrl;
+		this.allImageDescriptions = allImageDescriptions;
+	}
+	
+	public void addFavorite(Favorite favorite) {
+	     favorites.add(favorite);
+	     favorite.setImage(this);
+	 }
+
+    public void removeFavorite(Favorite favorite) {
+	      favorites.remove(favorite);
+	      favorite.setImage(null);
+	}
+
+	// Getter and setter for favorites
+	public Set<Favorite> getFavorites() {
+	     return favorites;
+	}
+
+	public void setFavorites(Set<Favorite> favorites) {
+	     this.favorites = favorites;
+	}
+	
+    // Getter method for the primary key field
+	public Long getAllImagesId()
+	{
+		return allImagesId;
+	}
+	
+    // Setter method for the primary key field
+	public void setAllImagesId(Long allImagesId)
+	{
+		this.allImagesId = allImagesId;
+	}
+	
+    // Getter method for the image URL field
+	public String getallImageUrl()
+	{
+		return allImageUrl;
+	}
+	
+    // Setter method for the image URL field
+	public void setAllImageUrl(String allImageUrl)
+	{
+		this.allImageUrl = allImageUrl;
+	}
+	
+	
+	public String getAllImageDescriptions()
+	{
+		return allImageDescriptions;	
+	}
+	
+	public void setAllImageDescriptions(String allImageDescriptions)
+	{
+		this.allImageDescriptions =allImageDescriptions;
+	}
+
+	
+    // Default constructor needed by JPA
+	public All_Images()
+	{
+		super();
+	}
+}
+
+Step 3.Create a repository for the Favorite entity:
+
+This interface extends
+JpaRepository<Favorite, Long>.
+It provides methods to interact with Favorite entities in the database (e.g., findByUser, findByUserAndImage).
+
+@Repository
+public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
+    List<Favorite> findByUser(AppUser user);
+    Optional<Favorite> findByUserAndImage(AppUser user, All_Images image);
+}
+
+Step 4.Create a service to handle favorite-related operations:
+
+This class handles operations related to favorites (adding, removing, retrieving). It injects
+repositories for Favorite, All_Images, and AppUser.It uses these repositories to perform actions like adding a favorite 
+(creating a Favorite entity and saving it).
+
+@Service
+public class FavoriteService {
+
+    @Autowired
+    private FavoriteRepository favoriteRepository;
+
+    @Autowired
+    private All_Images_Repository allImagesRepository;
+
+    @Autowired
+    private AppUserRepository appUserRepository;
+
+    public void addFavorite(Long userId, Long imageId) {
+        AppUser user = appUserRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        All_Images image = allImagesRepository.findById(imageId)
+            .orElseThrow(() -> new ResourceNotFoundException("Image not found"));
+
+        Favorite favorite = new Favorite(image, user);
+        favoriteRepository.save(favorite);
+    }
+
+    public void removeFavorite(Long userId, Long imageId) {
+        AppUser user = appUserRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        All_Images image = allImagesRepository.findById(imageId)
+            .orElseThrow(() -> new ResourceNotFoundException("Image not found"));
+
+        Favorite favorite = favoriteRepository.findByUserAndImage(user, image)
+            .orElseThrow(() -> new ResourceNotFoundException("Favorite not found"));
+
+        favoriteRepository.delete(favorite);
+    }
+
+    public List<All_Images> getFavoriteImages(Long userId) {
+        AppUser user = appUserRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return favoriteRepository.findByUser(user).stream()
+            .map(Favorite::getImage)
+            .collect(Collectors.toList());
+    }
+}
+
+Step 5.Create a controller to handle favorite-related endpoints:
+
+This class exposes API endpoints for managing favorites (/favorites).
+It injects the FavoriteService to delegate operations.
+It exposes methods for adding, removing, and retrieving a user's favorite images.
+
+@RestController
+@RequestMapping("/favorites")
+public class FavoriteController {
+
+    @Autowired
+    private FavoriteService favoriteService;
+
+    @PostMapping("/{userId}/{imageId}")
+    public ResponseEntity<?> addFavorite(@PathVariable Long userId, @PathVariable Long imageId) {
+        favoriteService.addFavorite(userId, imageId);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{userId}/{imageId}")
+    public ResponseEntity<?> removeFavorite(@PathVariable Long userId, @PathVariable Long imageId) {
+        favoriteService.removeFavorite(userId, imageId);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<List<All_Images>> getFavoriteImages(@PathVariable Long userId) {
+        List<All_Images> favorites = favoriteService.getFavoriteImages(userId);
+        return ResponseEntity.ok(favorites);
+    }
+}
+
+Step 6.SecurityConfig:Modify the SecurityConfig class to add the favorites endpoint:
+Modify the SecurityConfig to secure the /favorites endpoints (e.g., requiring an "apiKey" role).
+
+ .requestMatchers("/favorites/**").hasAuthority("apiKey")
+ 
+Step 7.AppUser entity:Make sure you've added the favorites relationship to the AppUser entity:
+
+Add a Set<Favorite> field named favorites to AppUser.
+This field holds references to Favorite entities associated with this user.
+Methods are added to manage the relationship (addFavorite, removeFavorite).
+
+@Entity
+public class AppUser {
+ 
+ // Marks this field as the primary key of the entity
+ @Id
+ // Specifies that the primary key value will be generated automatically using the AUTO strategy
+ @GeneratedValue(strategy = GenerationType.AUTO)
+ // Specifies that this column is not nullable and cannot be updated
+ @Column(nullable = false, updatable = false)
+ private Long id;
+ 
+ // Specifies that this column is not nullable and must be unique
+ @Column(nullable = false, unique = true)
+ private String username;
+ 
+ // Specifies that this column is not nullable
+ @Column(nullable = false)
+ private String password;
+ 
+ @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+ private Set<Favorite> favorites = new HashSet<>();
+ 
+ @Column(nullable = false)
+ private String role;
+ 
+ // Default constructor required by JPA
+ public AppUser() {
+ }
+ 
+ // Constructor to initialize the entity with username, password, and role
+ public AppUser(String username, String password,  String role) {
+     this.username = username;
+     this.password = password;
+     this.role = role;
+ }
+ 
+ public String getRole() {
+	    return role;
+	}
+
+	public void setRole(String role) {
+	    this.role = role;
+	}
+ 
+ // Getter method for the primary key field
+ public Long getId() {
+     return id;
+ }
+ 
+ // Setter method for the primary key field
+ public void setId(Long id) {
+     this.id = id;
+ }
+ 
+ // Getter method for the username field
+ public String getUsername() {
+     return username;
+ }
+ 
+ // Setter method for the username field
+ public void setUsername(String username) {
+     this.username = username;
+ }
+ 
+ // Getter method for the password field
+ public String getPassword() {
+     return password;
+ }
+ 
+ // Setter method for the password field
+ public void setPassword(String password) {
+     this.password = password;
+ }
+ 
+ // New methods for managing favorites
+ public Set<Favorite> getFavorites() {
+     return favorites;
+ }
+
+ public void setFavorites(Set<Favorite> favorites) {
+     this.favorites = favorites;
+ }
+
+ public void addFavorite(Favorite favorite) {
+     favorites.add(favorite);
+     favorite.setUser(this);
+ }
+
+ public void removeFavorite(Favorite favorite) {
+     favorites.remove(favorite);
+     favorite.setUser(null);
+ }
+ 
+}
+
+Step 8.Create a new class called FavoriteServiceIntegrationTest in your test directory.
+Run the test in your IDE (usually by right-clicking on the class or method name and selecting "Run Test" -> "JUnit")
+
+This class (FavoriteServiceIntegrationTest) tests the FavoriteService functionality.
+It creates test data (user and image) and verifies favorite addition, removal, and retrieval.
+
+@SpringBootTest
+@Transactional
+public class FavoriteServiceIntegrationTest {
+
+    @Autowired
+    private FavoriteService favoriteService;
+
+    @Autowired
+    private AppUserRepository appUserRepository;
+
+    @Autowired
+    private All_Images_Repository allImagesRepository;
+
+    @Test
+    public void testFavoriteFunctionality() {
+        // Create a test user and image
+        AppUser user = appUserRepository.save(new AppUser("testuser", "password", "USER"));
+        All_Images image = allImagesRepository.save(new All_Images("http://test.com/image.jpg", "Test Image"));
+
+        System.out.println("Initial favorites count: " + favoriteService.getFavoriteImages(user.getId()).size());
+
+        // Add favorite
+        favoriteService.addFavorite(user.getId(), image.getAllImagesId());
+        System.out.println("After adding favorite, count: " + favoriteService.getFavoriteImages(user.getId()).size());
+
+        // Verify favorite was added
+        List<All_Images> favorites = favoriteService.getFavoriteImages(user.getId());
+        assertEquals(1, favorites.size());
+        assertEquals(image.getAllImagesId(), favorites.get(0).getAllImagesId());
+
+        // Remove favorite
+        favoriteService.removeFavorite(user.getId(), image.getAllImagesId());
+        System.out.println("After removing favorite, count: " + favoriteService.getFavoriteImages(user.getId()).size());
+
+        // Verify favorite was removed
+        favorites = favoriteService.getFavoriteImages(user.getId());
+        assertTrue(favorites.isEmpty());
+    }
+}

@@ -18,65 +18,44 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@Component
+//This class is a filter that checks for an API key in the request header
+@Component 
+// This annotation is commented out for demonstration purposes
 public class ApiKeyFilter extends OncePerRequestFilter {
-    private final ApiKeyService apiKeyService;
-    private static final Logger log = LoggerFactory.getLogger(ApiKeyFilter.class);
 
-    public ApiKeyFilter(ApiKeyService apiKeyService) {
-        this.apiKeyService = apiKeyService;
-    }
-
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
-        String apiKey = request.getHeader("X-Api-Key");
-        log.info("Received API key: {}", apiKey);
-
-        if (apiKey != null && !apiKey.isEmpty()) {
-            if (isSearchRequest(request)) {
-                if (apiKeyService.validateApiKey(apiKey)) {
-                    setSearchAuthentication(apiKey, request);
-                    filterChain.doFilter(request, response);
-                    return;
-                }
-            } else if (isArtworkRequest(request)) {
-                if (apiKeyService.validateArtworkApiKey(apiKey)) {
-                    setAuthentication(apiKey, "apiKey");
-                    filterChain.doFilter(request, response);
-                    return;
-                }
-            } else {
-                if (apiKeyService.validateApiKey(apiKey)) {
-                    setAuthentication(apiKey, "apiKey");
-                    filterChain.doFilter(request, response);
-                    return;
-                }
-            }
-        }
-
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.getWriter().write("Invalid API key.");
-    }
-
-    private boolean isArtworkRequest(HttpServletRequest request) {
-        String requestUrl = request.getRequestURI();
-        return requestUrl.startsWith("/erikasArtWork");
-    }
-
-    private boolean isSearchRequest(HttpServletRequest request) {
-        String requestUrl = request.getRequestURI();
-        return requestUrl.startsWith("/api/search");
-    }
-
-    private void setAuthentication(String apiKey, String authority) {
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(apiKey, null, 
-            Collections.singletonList(new SimpleGrantedAuthority(authority)));
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-    }
-
-    private void setSearchAuthentication(String apiKey, HttpServletRequest request) {
-        String authority = isArtworkRequest(request) ? "erikasArtWorkApiKey" : "animeConventionApiKey";
-        setAuthentication(apiKey, authority);
-    }
+	 private final ApiKeyService apiKeyService;
+	 private static final Logger log = LoggerFactory.getLogger(ApiKeyFilter.class);
+	
+	 public ApiKeyFilter(ApiKeyService apiKeyService) {
+	     this.apiKeyService = apiKeyService;
+	 }
+	
+	 // This method performs the actual filtering logic on each request
+	 @Override
+	 protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+	         throws ServletException, IOException {
+	
+	     // This line retrieves the API key from the request header named "X-Api-Key"
+	     String apiKey = request.getHeader("X-Api-Key");
+	     log.info("Received API key: {}", apiKey);
+	
+	     // Checks if the API key is present and valid using the ApiKeyService
+	     if (apiKey == null || (apiKey != null && apiKeyService.validateApiKey(apiKey))) {
+	         //  sets the authentication context with the API key and a granted authority named "apiKey"
+	         setAuthentication(apiKey, "apiKey");
+	         filterChain.doFilter(request, response); // Allows the request to proceed if valid
+	     } else {
+	         log.debug("Invalid API key or missing API key.");
+	         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+	         response.getWriter().write("Invalid API key.");
+	     }
+	 }
+	
+	 // It sets the authentication context with the provided API key and authority
+	 private void setAuthentication(String apiKey, String authority) {
+	     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(apiKey, null, 
+	         Collections.singletonList(new SimpleGrantedAuthority(authority)));
+	     SecurityContextHolder.getContext().setAuthentication(authentication);
+	 }
 }
+

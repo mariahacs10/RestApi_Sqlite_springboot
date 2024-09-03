@@ -6,10 +6,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import com.example.artworkapi.domain.AnimeConventionArt;
-import com.example.artworkapi.domain.ErikasArtWork;
-import com.example.artworkapi.model.AnimeConventionRepository;
-import com.example.artworkapi.model.ErikasArtWorkRepository;
+import com.example.artworkapi.domain.All_Images;
+import com.example.artworkapi.model.All_Images_Repository;
 import com.example.artworkapi.service.ApiKeyService;
 
 import jakarta.annotation.PostConstruct;
@@ -18,24 +16,37 @@ import jakarta.annotation.PostConstruct;
 @SpringBootApplication
 public class ArtworkapiApplication implements CommandLineRunner
 {
+	/** Changes i've made in my app
+	  
+	  1.I deleted the search feature
+	  
+	  2.I deleted 1 table and renamed the other table to AllImages
+	  
+	  3.Modified the Repositories and Controllers
+	  
+	  4.Changed/Modified the SecurityConfig
+	  
+	  5.Changed the ApiKey logic, also remove the other api key.
+	  
+	  REMEMBER to use api/auth/resetpassword and not just /resetpassword
+	*/
+	
 	// Logger for logging messages, useful for debugging and monitoring the application
 	private static final Logger logger = 
 			LoggerFactory.getLogger(ArtworkapiApplication.class);
 
 	 // Repository for accessing anime convention artwork data
-	private final AnimeConventionRepository animeRepository;
+	private final All_Images_Repository allImagesRepository;
 	
-	private final ErikasArtWorkRepository artWorkRepository;
+	
 	
 	// Service for managing API keys
     private final ApiKeyService apiKeyService;
     
     // Constructor for dependency injection of the repositories and service
-	public ArtworkapiApplication(AnimeConventionRepository animeRepository, ApiKeyService apiKeyService, ErikasArtWorkRepository artWorkRepository) {
-		this.animeRepository = animeRepository;
-		//this.artWorkRepository = artWorkRepository;
+	public ArtworkapiApplication(All_Images_Repository allImagesRepository, ApiKeyService apiKeyService) {
+		this.allImagesRepository = allImagesRepository;
 		this.apiKeyService = apiKeyService;
-		this.artWorkRepository = artWorkRepository;
 	}
 
 	// Main method to launch the Spring Boot application
@@ -46,12 +57,16 @@ public class ArtworkapiApplication implements CommandLineRunner
     // Method annotated with @PostConstruct to execute after the bean initialization
 	@PostConstruct
 	  public void initApiKeys() {
-		      String apiKey = apiKeyService.generateArtworkApiKey();
-		      System.out.println("Generated ART api key: " + apiKey);
 		      
 		      String apiKey2 = apiKeyService.generateApiKey();
 		      System.out.println("Generated API key: " + apiKey2);
+		      
+		     
 	}
+	
+
+	    
+	
 
 	// Overridden method from CommandLineRunner to execute code after application startup
 	@Override
@@ -94,45 +109,55 @@ public class ArtworkapiApplication implements CommandLineRunner
 	    String jjkImage12 = "https://i.postimg.cc/1XdHM5Gv/jjkimage12.jpg";
 	    String jjkImage13 = "https://i.postimg.cc/c4VhnC4H/jjkimage13.jpg";
 		
-		
-		
+	    String animeCategory = "anime";
+	    String jjkCategory = "jjk";
+	
+	    
 		// Save the anime photos along with their descriptions into the repository
-		animeRepository.save(new AnimeConventionArt(animePhoto1, "aaron goofy pic"));
-		animeRepository.save(new AnimeConventionArt(animePhoto2, "Group Photo 1"));
-		animeRepository.save(new AnimeConventionArt(animePhoto3, "Photo With Mariah and Erika"));
-		animeRepository.save(new AnimeConventionArt(animePhoto4, "Gojo Pic with Erika"));
-		animeRepository.save(new AnimeConventionArt(animePhoto5, "Mahito Pic with Erika Pose 1"));
-		animeRepository.save(new AnimeConventionArt(animePhoto6, "Mahito Pic with Erika Pose 2"));
-		animeRepository.save(new AnimeConventionArt(animePhoto7, "Gojo Solo Pic"));
-		animeRepository.save(new AnimeConventionArt(animePhoto8, "Toji picture pose 1"));
-		animeRepository.save(new AnimeConventionArt(animePhoto9, "Riko Picture pose 1"));
-		animeRepository.save(new AnimeConventionArt(animePhoto10, "Riko Picture pose 2"));
-		animeRepository.save(new AnimeConventionArt(animePhoto11, "Toji picture pose 2"));
-		animeRepository.save(new AnimeConventionArt(animePhoto12, "Nanimi picture with Erika"));
-		animeRepository.save(new AnimeConventionArt(animePhoto13, "Inumaki picture with Mariah/Me pose 1"));
-		animeRepository.save(new AnimeConventionArt(animePhoto14, "Inumaki picture with Mariah/Me pose 2"));
-		animeRepository.save(new AnimeConventionArt(animePhoto15, "Mommy and Erika picture"));
-		animeRepository.save(new AnimeConventionArt(animePhoto16, "Uraume picture with Mariah and Erika"));
-		animeRepository.save(new AnimeConventionArt(animePhoto17, "Choso, Toji group photo"));
-		animeRepository.save(new AnimeConventionArt(animePhoto18, "Geto and Geto photo :)"));
-		animeRepository.save(new AnimeConventionArt(animePhoto19, "Group Photo 2"));
-		animeRepository.save(new AnimeConventionArt(animePhoto20, "Random person picture, Mariah and Erika"));	
+	    saveImageIfNotExists(animePhoto1, "aaron goofy pic anime", animeCategory);
+	    saveImageIfNotExists(animePhoto2, "Group Photo 1 anime", animeCategory);
+	    saveImageIfNotExists(animePhoto3, "Photo With Mariah and Erika anime", animeCategory);
+	    saveImageIfNotExists(animePhoto4, "Gojo Pic with Erika anime", animeCategory);
+	    saveImageIfNotExists(animePhoto5, "Mahito Pic with Erika Pose 1 anime", animeCategory);
+	    saveImageIfNotExists(animePhoto6, "Mahito Pic with Erika Pose 2 anime", animeCategory);
+	    saveImageIfNotExists(animePhoto7, "Gojo Solo Pic anime", animeCategory);
+	    saveImageIfNotExists(animePhoto8, "Toji picture pose 1 anime", animeCategory);
+	    saveImageIfNotExists(animePhoto9, "Riko Picture pose 1 anime",animeCategory);
+	    saveImageIfNotExists(animePhoto10, "Riko Picture pose 2 anime", animeCategory);
+	    saveImageIfNotExists(animePhoto11, "Toji picture pose 2 anime", animeCategory);
+	    saveImageIfNotExists(animePhoto12, "Nanimi picture with Erika anime", animeCategory);
+	    saveImageIfNotExists(animePhoto13, "Inumaki picture with Mariah/Me pose 1 anime", animeCategory);
+	    saveImageIfNotExists(animePhoto14, "Inumaki picture with Mariah/Me pose 2 anime", animeCategory);
+	    saveImageIfNotExists(animePhoto15, "Mommy and Erika picture anime", animeCategory);
+	    saveImageIfNotExists(animePhoto16, "Uraume picture with Mariah and Erika anime", animeCategory);
+	    saveImageIfNotExists(animePhoto17, "Choso, Toji group photo anime", animeCategory);
+	    saveImageIfNotExists(animePhoto18, "Geto and Geto photo :) anime", animeCategory);
+	    saveImageIfNotExists(animePhoto19, "Group Photo 2 anime", animeCategory);
+	    saveImageIfNotExists(animePhoto20, "Random person picture, Mariah and Erika anime", animeCategory);	
 
-		 artWorkRepository.save(new ErikasArtWork(jjkImage1));
-	     artWorkRepository.save(new ErikasArtWork(jjkImage2));
-	     artWorkRepository.save(new ErikasArtWork(jjkImage3));
-	     artWorkRepository.save(new ErikasArtWork(jjkImage4));
-	     artWorkRepository.save(new ErikasArtWork(jjkImage5));
-	     artWorkRepository.save(new ErikasArtWork(jjkImage6));
-	     artWorkRepository.save(new ErikasArtWork(jjkImage7));
-	     artWorkRepository.save(new ErikasArtWork(jjkImage8));
-	     artWorkRepository.save(new ErikasArtWork(jjkImage9));
-	     artWorkRepository.save(new ErikasArtWork(jjkImage10));
-	     artWorkRepository.save(new ErikasArtWork(jjkImage11));
-	     artWorkRepository.save(new ErikasArtWork(jjkImage12));
-	     artWorkRepository.save(new ErikasArtWork(jjkImage13));
+	    saveImageIfNotExists(jjkImage1, "Gojo ArtWork", jjkCategory);
+	    saveImageIfNotExists(jjkImage2, "Gojo ArtWork 2", jjkCategory);
+	    saveImageIfNotExists(jjkImage3, "Megumi Sukuna ArtWork", jjkCategory);
+	    saveImageIfNotExists(jjkImage4, "Megumi Sukuna ArtWork 2", jjkCategory);
+	    saveImageIfNotExists(jjkImage5, "Yuji ArtWork", jjkCategory);
+	    saveImageIfNotExists(jjkImage6,"Yuji ArtWork 2", jjkCategory);
+	    saveImageIfNotExists(jjkImage7, "Megumi Sukuna ArtWork 3", jjkCategory);
+	    saveImageIfNotExists(jjkImage8, "Yuji ArtWork 3", jjkCategory);
+	    saveImageIfNotExists(jjkImage9,"Gojo ArtWork 3",jjkCategory);
+	    saveImageIfNotExists(jjkImage10, "Megumi and Yuji ArtWork", jjkCategory);
+	    saveImageIfNotExists(jjkImage11, "Megumi ArtWork",jjkCategory);
+	    saveImageIfNotExists(jjkImage12, "Toji ArtWork", jjkCategory);
+	    saveImageIfNotExists(jjkImage13, "Toji ArtWork 2",jjkCategory);
 	       
 		
 		
 	}
+	
+	private void saveImageIfNotExists(String imageUrl, String description, String category) {
+	    if (!allImagesRepository.findByAllImageUrl(imageUrl).isPresent()) {
+	        allImagesRepository.save(new All_Images(imageUrl, description, category));
+	    }
+	}
 }
+
+

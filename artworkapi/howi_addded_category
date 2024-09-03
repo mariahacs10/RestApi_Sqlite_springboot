@@ -1,0 +1,57 @@
+Here are the steps to add a category in the spring boot application
+
+Step 1. Modify the All_Images entity to include the category field:
+
+@Entity
+//Specifies the name of the table in the database that this entity will be mapped to
+@Table(name="all images table")
+public class All_Images {
+
+   private String category;
+
+   public All_Images(String category)
+   {
+         this.category = category;
+   }
+}
+
+Step 2.Update the All_Images_Repository Add a method to find images by category
+@RepositoryRestResource(exported = false)
+public interface All_Images_Repository extends JpaRepository<All_Images, Long> {
+	
+    List<All_Images> findByCategory(String category);
+
+}
+
+Step 3.Update the All_Images_Controller Add endpoints to fetch images by category
+
+@RestController
+//Enables Cross-Origin Resource Sharing (CORS) for this controller, allowing requests from the specified origin
+@CrossOrigin("https://react-carsandboats.onrender.com/")
+public class All_Images_Controller {
+	
+	 // Dependency injection of the AnimeConventionRepository
+	private final All_Images_Repository repository;
+  
+	// Constructor for dependency injection of the repository
+	public All_Images_Controller(All_Images_Repository repository) {
+	    this.repository = repository;
+	}
+  
+	// Handles HTTP GET requests to the /animeConvention endpoint
+    @GetMapping("/allImages")
+    // Method to get all anime convention artworks
+	public Iterable<All_Images> getAllImages(){
+    	// Retrieves and returns all AnimeConventionArt entities from the repository
+    	return repository.findAll();
+	}
+	
+	  @GetMapping("/allImages/category/{category}")
+	    public List<All_Images> getImagesByCategory(@PathVariable String category) {
+	        return repository.findByCategory(category);
+	    }
+}
+
+
+	
+    

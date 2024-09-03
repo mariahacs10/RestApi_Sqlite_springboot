@@ -1,0 +1,171 @@
+9/2/2024
+
+Remember if you want to acess the thymeleaf you have to use
+
+http:localhostmain://yourportnumber/api/auth/reset-password?token=yourtoken
+------------------------------------------------------------------------------------------------
+
+Here are the steps to create a thymeleaf page:
+
+1.To create the thymeleaf page you want to right click on the
+src-main-resources-templates, and create a file called reset-password.html
+and in there put in the html information:
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Reset Password</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 400px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Reset Your Password</h2>
+        <form th:action="@{/api/auth/reset-password}" method="post">
+	    <input type="hidden" name="token" th:value="${token}" />
+	    <label for="password">New Password:</label>
+	    <input type="password" id="password" name="newPassword" required />
+	    <button type="submit">Reset Password</button>
+	</form>
+    </div>
+</body>
+</html>
+
+
+1a.Controller type, change the AuthControler from @RestController to @Controoler
+
+2.Token Expiration. check for token expiration in the resetPassword method
+add this in the forgotPassword :
+
+user.setPasswordResetToken(token);
+user.setPasswordResetTokenExpiration(Date.from(Instant.now().plus(15, ChronoUnit.MINUTES)));
+userRepository.save(user);
+
+    
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        Optional<AppUser> userOptional = userRepository.findByEmail(request.getEmail());
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.badRequest().body("No user found with this email.");
+        }
+
+        AppUser user = userOptional.get();
+        String token = TokenGenerator.generateToken(); // Generate a unique token
+        user.setPasswordResetToken(token);
+        user.setPasswordResetTokenExpiration(LocalDateTime.now().plus(Duration.ofMinutes(15)));
+        userRepository.save(user);
+
+        // Generate the reset link
+        String resetLink = "http://192.168.68.118:8686/reset-password?token=" + token;
+
+        String content = "To reset your password, please click the following link: <a href=\"" + resetLink + "\">Reset Password</a>";
+
+        // You can either set a default sender email or use the user's email as the sender
+        String senderEmail = "default-sender@example.com"; // or user.getEmail() if using user email
+
+        emailService.sendEmail(user.getEmail(), "Password Reset Request", content, senderEmail);
+
+        return ResponseEntity.ok("Password reset email sent.");
+    }
+
+    @GetMapping("/reset-password")
+    public String showResetPasswordPage(@RequestParam("token") String token, Model model) {
+        model.addAttribute("token", token);
+        return "reset-password";
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+        Optional<AppUser> userOptional = userRepository.findByPasswordResetToken(request.getToken());
+        
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.badRequest().body("Invalid reset token.");
+        }
+
+        AppUser user = userOptional.get();
+        
+        LocalDateTime now = LocalDateTime.now();
+        if (user.getPasswordResetTokenExpiration() != null && now.isAfter(user.getPasswordResetTokenExpiration())) {
+            return ResponseEntity.badRequest().body("Reset token has expired.");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setPasswordResetToken(null);
+        user.setPasswordResetTokenExpiration(null);
+        userRepository.save(user);
+
+        return ResponseEntity.ok("Password has been reset successfully.");
+    }
+
+3.Update the AppUser entity: chnage the type of passwordResetTokenExpiration to LocalDateTime.
+this is more modern and appropriate type for handling date and time:
+
+@Column(nullable = true)
+ private LocalDateTime passwordResetTokenExpiration;
+
+public LocalDateTime getPasswordResetTokenExpiration() {
+     return passwordResetTokenExpiration;
+ }
+
+ public void setPasswordResetTokenExpiration(LocalDateTime passwordResetTokenExpiration) {
+     this.passwordResetTokenExpiration = passwordResetTokenExpiration;
+ }
+
+5.Create a Token Generato page because that generates a new token every time you run the application:
+public class TokenGenerator {
+	 public static String generateToken() {
+	        SecureRandom secureRandom = new SecureRandom();
+	        byte[] tokenBytes = new byte[24];
+	        secureRandom.nextBytes(tokenBytes);
+	        return Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
+	    }
+
+	    public static void main(String[] args) {
+	        System.out.println("Generated Token: " + generateToken());
+	    }
+
+}
+=

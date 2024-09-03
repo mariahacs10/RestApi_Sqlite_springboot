@@ -1,0 +1,132 @@
+8/2/2024
+
+These are the steps on how i created the email column.
+
+
+
+
+Step 1: Add the email field to the User entity class.
+
+@Entity
+public class AppUser {
+ 
+ @Column(nullable = false, unique = true)
+ private String email;
+ 
+ public AppUser() {
+ }
+ 
+ public AppUser(String email) {
+     this.email = email;
+ }
+ 
+ public String getEmail() {
+     return email;
+ }
+ 
+ public void setEmail(String email) {
+     this.email = email;
+ }
+ 
+ }
+ 
+ Step 2.Configuring the Repository Layer, Update the AppUserRepository interface.
+ 
+ @RepositoryRestResource(exported = false)
+public interface AppUserRepository extends JpaRepository 
+<AppUser, Long> {
+    
+    Optional<AppUser> findByEmail(String email); // Add this line
+}
+ 
+Step 3.Add email to the SignUpRequest class:
+public class SignupRequest {
+
+ // Private fields to hold username and password
+ private String username;
+ private String password;
+ private String email;
+
+ // Getter method to retrieve the username
+ public String getUsername() {
+     return username;
+ }
+
+ // Setter method to set the username
+ public void setUsername(String username) {
+     this.username = username;
+ }
+
+ // Getter method to retrieve the password
+ public String getPassword() {
+     return password;
+ }
+
+ // Setter method to set the password
+ public void setPassword(String password) {
+     this.password = password;
+ }
+ 
+ public String getEmail() {
+     return email;
+ }
+
+ public void setEmail(String email) {
+     this.email = email;
+ }
+}
+
+ 
+Step 4.Implementing the Controller Layer Create a REST controller to handle HTTP requests for email:
+
+@RestController
+//This defines the base path for all request mappings in this controller
+@RequestMapping("/api/auth")
+public class AuthController {
+
+    // Autowired injects the AppUserRepository dependency
+    @Autowired
+    private AppUserRepository userRepository;
+    
+    @Autowired
+    private GoogleTokenVerifierService googleTokenVerifierService;
+
+    
+    private final JwtService jwtService = new JwtService();
+    // Creates a logger instance for this class
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
+    
+
+    // Autowired injects the PasswordEncoder dependency
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    // This method handles POST requests to /api/auth/signup
+    @PostMapping("/signup")
+    public ResponseEntity<?> registerUser(@RequestBody SignupRequest signupRequest) {
+        // Checks if a user with the provided username already exists
+        if (userRepository.findByUsername(signupRequest.getUsername()).isPresent()) {
+            return ResponseEntity.badRequest().body("Error: Username is already taken!");
+        }
+
+        // Checks if a user with the provided email already exists
+        if (userRepository.findByEmail(signupRequest.getEmail()).isPresent()) {
+            return ResponseEntity.badRequest().body("Error: Email is already taken!");
+        }
+
+        // It creates a new AppUser object with the provided username, encoded password, email, and default role
+        AppUser user = new AppUser(
+            signupRequest.getUsername(),
+            passwordEncoder.encode(signupRequest.getPassword()),
+            signupRequest.getEmail(),
+            "USER" // Default role
+        );
+
+        // Saves the new user to the database
+        userRepository.save(user);
+        
+        logger.info("Received signup request for username: {}", signupRequest.getUsername());
+
+        return ResponseEntity.ok("User registered successfully!");
+    }
+ }
