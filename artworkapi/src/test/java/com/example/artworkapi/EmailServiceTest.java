@@ -1,31 +1,30 @@
 package com.example.artworkapi;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
 
 import com.example.artworkapi.service.EmailService;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-public class EmailServiceTest {
+@Component
+public class EmailServiceTest implements CommandLineRunner{
 
     @Autowired
     private EmailService emailService;
 
-    @MockBean
-    private JavaMailSender javaMailSender;
+    @Override
+    public void run(String... args) throws Exception {
+        // Replace with actual recipient and sender email addresses
+        String to = "eallen206@yahoo.com";
+        String subject = "Test Email";
+        String content = "This is a test email sent from Spring Boot.";
+        String from = "mariahacs10@yahoo.com"; // Your Yahoo email address
 
-    public void sendSimpleEmail() {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo("test@dummy.com"); // Dummy email address
-        message.setFrom("yuyusoamazing@gmail.com"); // Use your sender email
-        message.setSubject("Test Email");
-        message.setText("This is a simple test email sent via Mailtrap.");
-        
-        javaMailSender.send(message);
+        try {
+            emailService.sendEmail(to, subject, content, from);
+            System.out.println("Test email sent successfully.");
+        } catch (Exception e) {
+            System.err.println("Failed to send test email: " + e.getMessage());
+        }
     }
 }

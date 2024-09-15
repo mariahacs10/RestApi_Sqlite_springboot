@@ -2,7 +2,7 @@
 
 Remember if you want to acess the thymeleaf you have to use
 
-http:localhostmain://yourportnumber/api/auth/reset-password?token=yourtoken
+http://localhostmain:yourportnumber/api/auth/reset-password?token=yourtoken
 ------------------------------------------------------------------------------------------------
 
 Here are the steps to create a thymeleaf page:

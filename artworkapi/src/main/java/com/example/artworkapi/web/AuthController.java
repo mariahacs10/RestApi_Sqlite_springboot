@@ -83,13 +83,13 @@ public class AuthController {
 	     userRepository.save(user);
 	
 	     // Create the reset password link
-	     String resetLink = "http://192.168.68.118:8686/reset-password?token=" + token;
+	     String resetLink = "http://192.168.68.118:8686/api/auth/reset-password?token=" + token;
 	
 	     // Prepare email content
 	     String content = "To reset your password, please click the following link: <a href=\"" + resetLink + "\">Reset Password</a>";
 	
-	     // Set sender email (could be a default or the user's email)
-	     String senderEmail = "default-sender@example.com";
+	     // Set sender email ( the user's email)
+	     String senderEmail = "mariahacs10@yahoo.com";
 	
 	     // Send the password reset email
 	     emailService.sendEmail(user.getEmail(), "Password Reset Request", content, senderEmail);
@@ -115,30 +115,50 @@ public class AuthController {
 	  * @return ResponseEntity with the result of the operation
 	  */
 	 @PostMapping("/reset-password")
-	 public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
-	     // Find user by reset token
-	     Optional<AppUser> userOptional = userRepository.findByPasswordResetToken(request.getToken());
-	
-	     if (userOptional.isEmpty()) {
-	         return ResponseEntity.badRequest().body("Invalid reset token.");
-	     }
-	
-	     AppUser user = userOptional.get();
-	
-	     // Check if the token has expired
-	     LocalDateTime now = LocalDateTime.now();
-	     if (user.getPasswordResetTokenExpiration() != null && now.isAfter(user.getPasswordResetTokenExpiration())) {
-	         return ResponseEntity.badRequest().body("Reset token has expired.");
-	     }
-	
-	     // Update user's password and clear reset token data
-	     user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-	     user.setPasswordResetToken(null);
-	     user.setPasswordResetTokenExpiration(null);
-	     userRepository.save(user);
-	
-	     return ResponseEntity.ok("Password has been reset successfully.");
-	 }
+	   public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+	       // Find user by reset token
+	       Optional<AppUser> userOptional = userRepository.findByPasswordResetToken(request.getToken());
+
+	       if (userOptional.isEmpty()) {
+	           return ResponseEntity.badRequest().body("Invalid reset token.");
+	       }
+
+	       AppUser user = userOptional.get();
+
+	       // Check if the token has expired
+	       LocalDateTime now = LocalDateTime.now();
+	       if (user.getPasswordResetTokenExpiration() != null && now.isAfter(user.getPasswordResetTokenExpiration())) {
+	           return ResponseEntity.badRequest().body("Reset token has expired.");
+	       }
+
+	       // Check if passwords match
+	       if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+	           return ResponseEntity.badRequest().body("Passwords do not match.");
+	       }
+
+	       // Validate password strength
+	       if (!isPasswordStrong(request.getNewPassword())) {
+	           return ResponseEntity.badRequest().body("Password does not meet strength requirements.");
+	       }
+
+	       // Update user's password and clear reset token data
+	       user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+	       user.setPasswordResetToken(null);
+	       user.setPasswordResetTokenExpiration(null);
+	       userRepository.save(user);
+
+	       return ResponseEntity.ok("Password has been reset successfully.");
+	   }
+
+	   private boolean isPasswordStrong(String password) {
+	       // Implement password strength checks here
+	       // For example: minimum length, contains uppercase, lowercase, number, special character
+	       return password.length() >= 8 &&
+	              password.matches(".*[A-Z].*") &&
+	              password.matches(".*[a-z].*") &&
+	              password.matches(".*\\d.*") &&
+	              password.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?].*");
+	   }
     // This method handles POST requests to /api/auth/signup
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody SignupRequest signupRequest) {

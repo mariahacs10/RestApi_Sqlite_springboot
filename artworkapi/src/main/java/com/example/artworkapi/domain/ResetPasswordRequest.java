@@ -7,6 +7,8 @@ public class ResetPasswordRequest {
  
  // The new password that the user wants to set
  private String newPassword;
+ 
+ private String confirmPassword;
 
  // Default constructor
  // This allows creating an instance without initializing fields
@@ -15,9 +17,19 @@ public class ResetPasswordRequest {
 
  // Parameterized constructor
  // This allows creating an instance with all fields initialized
- public ResetPasswordRequest(String token, String newPassword) {
+ public ResetPasswordRequest(String token, String newPassword, String confirmPassword) {
      this.token = token;
      this.newPassword = newPassword;
+ }
+ 
+ public String getConfirmPassword()
+ {
+	 return confirmPassword;
+ }
+ 
+ public void setConfirmPassword(String confirmPassword)
+ {
+	 this.confirmPassword = confirmPassword;
  }
 
  // Getter for token
