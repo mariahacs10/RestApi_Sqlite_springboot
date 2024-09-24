@@ -36,7 +36,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
          AppUser currentUser = user.get();
          builder = org.springframework.security.core.userdetails.User.withUsername(username);
          builder.password(currentUser.getPassword())
-         .roles(currentUser.getRole()); // Add the role here
+         .roles(currentUser.getRole()); // Add this line; // Add the role here
      } else {
          // If user is not found, throw UsernameNotFoundException
          throw new UsernameNotFoundException("User not found.");

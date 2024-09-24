@@ -29,7 +29,7 @@ public class All_Images {
     
     private String category;
     
-    @OneToMany(mappedBy = "image", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "image", cascade = CascadeType.ALL)
     private Set<Favorite> favorites = new HashSet<>();
     
     

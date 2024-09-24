@@ -65,8 +65,10 @@ public class SecurityConfig {
                     .requestMatchers("/api/auth/google-signin").permitAll()
                     .requestMatchers("/allImages/**").hasAuthority("apiKey")
                     .requestMatchers("/allImages/category/{category}").hasAuthority("apiKey")
-                    .requestMatchers("/favorites/**").hasAuthority("apiKey")
-                .anyRequest().authenticated())
+                    .requestMatchers("/favorites/addFav").hasAuthority("apiKey")   // Authenticated access to add a favorite
+                    .requestMatchers("/favorites/user/**").hasAuthority("apiKey") // Authenticated access to view user favorites
+                    .requestMatchers("/favorites/delete/**").hasAuthority("apiKey")  // Authenticated access to delete a favorite
+                    .anyRequest().authenticated())
             .addFilterBefore(apiKeyFilter, UsernamePasswordAuthenticationFilter.class) // Add API key filter before JWT filter
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .cors(withDefaults());

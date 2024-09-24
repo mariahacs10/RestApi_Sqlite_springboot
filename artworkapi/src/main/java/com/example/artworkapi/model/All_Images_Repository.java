@@ -14,5 +14,5 @@ public interface All_Images_Repository extends JpaRepository<All_Images, Long> {
     List<All_Images> findByCategory(String category);
     
     Optional<All_Images> findByAllImageUrl(String allImageUrl);
-
+    
 }

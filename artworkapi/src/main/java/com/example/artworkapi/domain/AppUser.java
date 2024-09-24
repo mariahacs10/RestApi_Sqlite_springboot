@@ -36,7 +36,7 @@ public class AppUser {
  @Column(nullable = false, unique = true)
  private String email;
  
- @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+ @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
  private Set<Favorite> favorites = new HashSet<>();
  
  @Column(nullable = true)

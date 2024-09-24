@@ -191,65 +191,67 @@ public class AuthController {
     
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest) {
-      // Find user by username
-      AppUser user = userRepository.findByUsername(loginRequest.getUsername()).orElse(null);
-      
-      // Check if user exists and password matches
-      if (user != null && passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-        // Generate JWT token using JwtService
-        String jwtToken = jwtService.generateToken(user); // Assuming JwtService has a generateToken method
-        return ResponseEntity.ok(new LoginResponse(jwtToken)); // Create a LoginResponse with the token
-      } else {
-        return ResponseEntity.badRequest().body("Invalid username or password");
-      }
-    }
-    
-    @PostMapping("/google-signin")
-    public ResponseEntity<?> googleSignIn(@RequestBody GoogleSignInRequest googleSignInRequest) {
-        try {
-            logger.info("Received Google Sign-In request with token: {}", googleSignInRequest.getIdToken());
+        // Find user by username
+        AppUser user = userRepository.findByUsername(loginRequest.getUsername()).orElse(null);
 
-            GoogleIdToken idToken = googleTokenVerifierService.verifyToken(googleSignInRequest.getIdToken());
-            if (idToken == null) {
-                logger.error("Invalid ID token: {}", googleSignInRequest.getIdToken());
-                return ResponseEntity.badRequest().body("Invalid ID token");
-            }
+        // Check if user exists and password matches
+        if (user != null && passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+            // Generate JWT token using JwtService
+            String jwtToken = jwtService.generateToken(user); // Assuming JwtService has a generateToken method
 
-            GoogleIdToken.Payload payload = idToken.getPayload();
-            String firstName = (String) payload.get("given_name");
-            String googleId = payload.getSubject();
-
-            logger.info("Google Sign-In payload - First Name: {}, Google ID: {}", firstName, googleId);
-
-            AppUser user = userRepository.findByGoogleId(googleId).orElseGet(() -> {
-                logger.info("Creating new user with Google ID: {}", googleId);
-                AppUser newUser = new AppUser();
-                newUser.setFirstName(firstName);
-                newUser.setGoogleId(googleId);
-                newUser.setRole("USER");
-                return userRepository.save(newUser);
-            });
-
-            boolean updated = false;
-            if (!firstName.equals(user.getFirstName())) {
-                user.setFirstName(firstName);
-                updated = true;
-            }
-            if (user.getGoogleId() == null || !user.getGoogleId().equals(googleId)) {
-                user.setGoogleId(googleId);
-                updated = true;
-            }
-            if (updated) {
-                logger.info("Updating user information for Google ID: {}", googleId);
-                user = userRepository.save(user);
-            }
-
-            String jwtToken = jwtService.generateToken(user);
-            logger.info("Successfully processed Google Sign-In for user: {}", user.getFirstName());
-            return ResponseEntity.ok(new LoginResponse(jwtToken));
-        } catch (Exception e) {
-            logger.error("Error processing Google Sign-In", e);
-            return ResponseEntity.status(HttpStatus.SC_INTERNAL_SERVER_ERROR).body("Error processing Google Sign-In");
+            // Return the token and userId in the response
+            return ResponseEntity.ok(new LoginResponse(jwtToken, user.getId())); // Return token and userId
+        } else {
+            return ResponseEntity.badRequest().body("Invalid username or password");
         }
     }
+    
+//    @PostMapping("/google-signin")
+//    public ResponseEntity<?> googleSignIn(@RequestBody GoogleSignInRequest googleSignInRequest) {
+//        try {
+//            logger.info("Received Google Sign-In request with token: {}", googleSignInRequest.getIdToken());
+//
+//            GoogleIdToken idToken = googleTokenVerifierService.verifyToken(googleSignInRequest.getIdToken());
+//            if (idToken == null) {
+//                logger.error("Invalid ID token: {}", googleSignInRequest.getIdToken());
+//                return ResponseEntity.badRequest().body("Invalid ID token");
+//            }
+//
+//            GoogleIdToken.Payload payload = idToken.getPayload();
+//            String firstName = (String) payload.get("given_name");
+//            String googleId = payload.getSubject();
+//
+//            logger.info("Google Sign-In payload - First Name: {}, Google ID: {}", firstName, googleId);
+//
+//            AppUser user = userRepository.findByGoogleId(googleId).orElseGet(() -> {
+//                logger.info("Creating new user with Google ID: {}", googleId);
+//                AppUser newUser = new AppUser();
+//                newUser.setFirstName(firstName);
+//                newUser.setGoogleId(googleId);
+//                newUser.setRole("USER");
+//                return userRepository.save(newUser);
+//            });
+//
+//            boolean updated = false;
+//            if (!firstName.equals(user.getFirstName())) {
+//                user.setFirstName(firstName);
+//                updated = true;
+//            }
+//            if (user.getGoogleId() == null || !user.getGoogleId().equals(googleId)) {
+//                user.setGoogleId(googleId);
+//                updated = true;
+//            }
+//            if (updated) {
+//                logger.info("Updating user information for Google ID: {}", googleId);
+//                user = userRepository.save(user);
+//            }
+//
+//            String jwtToken = jwtService.generateToken(user);
+//            logger.info("Successfully processed Google Sign-In for user: {}", user.getFirstName());
+//            return ResponseEntity.ok(new LoginResponse(jwtToken, null));
+//        } catch (Exception e) {
+//            logger.error("Error processing Google Sign-In", e);
+//            return ResponseEntity.status(HttpStatus.SC_INTERNAL_SERVER_ERROR).body("Error processing Google Sign-In");
+//        }
+//    }
 }
