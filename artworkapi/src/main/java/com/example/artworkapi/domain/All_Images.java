@@ -3,8 +3,9 @@ package com.example.artworkapi.domain;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -30,15 +31,27 @@ public class All_Images {
     private String category;
     
     @OneToMany(mappedBy = "image", cascade = CascadeType.ALL)
+    @JsonManagedReference // This will manage the reference from All_Images to Favorite
     private Set<Favorite> favorites = new HashSet<>();
     
     
     // Constructor to initialize the entity with an image URL and description
-	public All_Images(String allImageUrl, String allImageDescriptions, String category)
+	public All_Images(Long allImagesId, String allImageUrl, String allImageDescriptions, String category)
 	{
+	    this.allImagesId = allImagesId;  // Ensure this field is set properly
 		this.allImageUrl = allImageUrl;
 		this.category = category;
 		this.allImageDescriptions = allImageDescriptions;
+	}
+	
+	public Long getAllImageId()
+	{
+		return allImagesId;
+	}
+	
+	public void setAllImageId(Long allImagesId)
+	{
+		this.allImagesId = allImagesId;
 	}
 	
 	public void addFavorite(Favorite favorite) {

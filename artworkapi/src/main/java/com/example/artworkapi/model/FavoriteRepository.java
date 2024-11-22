@@ -20,5 +20,7 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
     
     // Add this method to resolve the first error
     Optional<Favorite> findByUserAndImage(AppUser user, All_Images image);
+    
+    boolean existsByImageAndUser(All_Images image, AppUser user);
 
 }

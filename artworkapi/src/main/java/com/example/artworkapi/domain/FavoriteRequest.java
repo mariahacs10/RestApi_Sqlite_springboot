@@ -1,17 +1,16 @@
 package com.example.artworkapi.domain;
 
-
 public class FavoriteRequest {
-    private String imageUrl;
+    private Long imageId;  // Add imageId to link to an image in the database
     private Long userId;
 
     // Getters and setters
-    public String getImageUrl() {
-        return imageUrl;
+    public Long getImageId() {
+        return imageId;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public void setImageId(Long imageId) {
+        this.imageId = imageId;
     }
 
     public Long getUserId() {

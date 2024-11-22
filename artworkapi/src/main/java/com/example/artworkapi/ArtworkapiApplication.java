@@ -154,10 +154,14 @@ public class ArtworkapiApplication implements CommandLineRunner
 	}
 	
 	private void saveImageIfNotExists(String imageUrl, String description, String category) {
+	    // Check if an image with the given URL already exists in the repository
 	    if (!allImagesRepository.findByAllImageUrl(imageUrl).isPresent()) {
-	        allImagesRepository.save(new All_Images(imageUrl, description, category));
+	        // Create and save a new All_Images entity
+	        All_Images newImage = new All_Images(null, imageUrl, description, category);  // Pass 'null' for the ID
+	        allImagesRepository.save(newImage);
 	    }
 	}
+
 }
 
 

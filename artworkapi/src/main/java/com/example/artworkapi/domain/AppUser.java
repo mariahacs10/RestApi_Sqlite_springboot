@@ -1,9 +1,10 @@
 package com.example.artworkapi.domain;
 
-import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -37,6 +38,7 @@ public class AppUser {
  private String email;
  
  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+ @JsonManagedReference // Use this to indicate the forward relationship to Favorite
  private Set<Favorite> favorites = new HashSet<>();
  
  @Column(nullable = true)
