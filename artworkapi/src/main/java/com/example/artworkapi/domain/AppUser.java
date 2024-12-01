@@ -21,7 +21,7 @@ public class AppUser {
  // Marks this field as the primary key of the entity
  @Id
  // Specifies that the primary key value will be generated automatically using the AUTO strategy
- @GeneratedValue(strategy = GenerationType.AUTO)
+ @GeneratedValue(strategy = GenerationType.IDENTITY)
  // Specifies that this column is not nullable and cannot be updated
  @Column(nullable = false, updatable = false)
  private Long id;
