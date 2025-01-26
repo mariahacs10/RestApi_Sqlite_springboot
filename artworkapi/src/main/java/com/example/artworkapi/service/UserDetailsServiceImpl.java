@@ -1,7 +1,9 @@
 package com.example.artworkapi.service;
 
+import java.util.Collections;
 import java.util.Optional;
 
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User.UserBuilder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -27,22 +29,16 @@ public class UserDetailsServiceImpl implements UserDetailsService {
  // Overrides the loadUserByUsername method from UserDetailsService
  @Override
  public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-     // Finds the user by username using the repository
-     Optional<AppUser> user = repository.findByUsername(username);
-     UserBuilder builder = null;
+     // Find the user by username
+     AppUser currentUser = repository.findByUsername(username)
+         .orElseThrow(() -> new UsernameNotFoundException("User not found."));
      
-     // If user is present, build the UserDetails object
-     if (user.isPresent()) {
-         AppUser currentUser = user.get();
-         builder = org.springframework.security.core.userdetails.User.withUsername(username);
-         builder.password(currentUser.getPassword())
-         .roles(currentUser.getRole()); // Add this line; // Add the role here
-     } else {
-         // If user is not found, throw UsernameNotFoundException
-         throw new UsernameNotFoundException("User not found.");
-     }
-     
-     // Returns the built UserDetails object
-     return builder.build();
+     // Create and return UserDetailsImpl with all required information
+     return new UserDetailsImpl(
+         currentUser.getId(),
+         currentUser.getUsername(),
+         currentUser.getPassword(),
+         Collections.singletonList(new SimpleGrantedAuthority(currentUser.getRole()))
+     );
  }
 }

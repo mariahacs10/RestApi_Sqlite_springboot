@@ -1,9 +1,11 @@
 package com.example.artworkapi.web;
 
-import java.sql.Date;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
-import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,9 +30,6 @@ import com.example.artworkapi.model.AppUserRepository;
 import com.example.artworkapi.service.EmailService;
 import com.example.artworkapi.service.GoogleTokenVerifierService;
 import com.example.artworkapi.service.JwtService;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import java.time.LocalDateTime;
-import java.time.Duration;
 
 
 //This class handles authentication-related HTTP requests
@@ -159,36 +158,73 @@ public class AuthController {
 	              password.matches(".*\\d.*") &&
 	              password.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?].*");
 	   }
+	   
+	   @PostMapping("/signup")
+	   public ResponseEntity<Map<String, String>> registerUser(@RequestBody SignupRequest signupRequest) {
+	       Map<String, String> response = new HashMap<>();
+
+	       // Check if a user with the provided username already exists
+	       if (userRepository.findByUsername(signupRequest.getUsername()).isPresent()) {
+	           response.put("error", "Error: Username is already taken!");
+	           return ResponseEntity.badRequest().body(response);
+	       }
+
+	       // Check if a user with the provided email already exists
+	       if (userRepository.findByEmail(signupRequest.getEmail()).isPresent()) {
+	           response.put("error", "Error: Email is already taken!");
+	           return ResponseEntity.badRequest().body(response);
+	       }
+
+	       // Create a new AppUser object with the provided username, encoded password, email, and default role
+	       AppUser user = new AppUser(
+	           signupRequest.getUsername(),
+	           passwordEncoder.encode(signupRequest.getPassword()),
+	           signupRequest.getEmail(),
+	           "USER" // Default role
+	       );
+
+	       // Save the new user to the database
+	       userRepository.save(user);
+
+	       logger.info("Received signup request for username: {}", signupRequest.getUsername());
+
+	       // Return a success response
+	       response.put("message", "User registered successfully!");
+	       response.put("userId", String.valueOf(user.getId())); // Include the user ID if needed
+	       return ResponseEntity.ok(response);
+	   }
+
+	   
     // This method handles POST requests to /api/auth/signup
-    @PostMapping("/signup")
-    public ResponseEntity<?> registerUser(@RequestBody SignupRequest signupRequest) {
-        // Checks if a user with the provided username already exists
-        if (userRepository.findByUsername(signupRequest.getUsername()).isPresent()) {
-            return ResponseEntity.badRequest().body("Error: Username is already taken!");
-        }
-
-        // Checks if a user with the provided email already exists
-        if (userRepository.findByEmail(signupRequest.getEmail()).isPresent()) {
-            return ResponseEntity.badRequest().body("Error: Email is already taken!");
-        }
-
-        // It creates a new AppUser object with the provided username, encoded password, email, and default role
-        AppUser user = new AppUser(
-            signupRequest.getUsername(),
-            passwordEncoder.encode(signupRequest.getPassword()),
-            //adding the email to the database
-            signupRequest.getEmail(),
-            "USER" // Default role
-        );
-
-        // Saves the new user to the database
-        userRepository.save(user);
-        
-        logger.info("Received signup request for username: {}", signupRequest.getUsername());
-
-        return ResponseEntity.ok("User registered successfully!");
-    }
-    
+//    @PostMapping("/signup")
+//    public ResponseEntity<?> registerUser(@RequestBody SignupRequest signupRequest) {
+//        // Checks if a user with the provided username already exists
+//        if (userRepository.findByUsername(signupRequest.getUsername()).isPresent()) {
+//            return ResponseEntity.badRequest().body("Error: Username is already taken!");
+//        }
+//
+//        // Checks if a user with the provided email already exists
+//        if (userRepository.findByEmail(signupRequest.getEmail()).isPresent()) {
+//            return ResponseEntity.badRequest().body("Error: Email is already taken!");
+//        }
+//
+//        // It creates a new AppUser object with the provided username, encoded password, email, and default role
+//        AppUser user = new AppUser(
+//            signupRequest.getUsername(),
+//            passwordEncoder.encode(signupRequest.getPassword()),
+//            //adding the email to the database
+//            signupRequest.getEmail(),
+//            "USER" // Default role
+//        );
+//
+//        // Saves the new user to the database
+//        userRepository.save(user);
+//        
+//        logger.info("Received signup request for username: {}", signupRequest.getUsername());
+//
+//        return ResponseEntity.ok("User registered successfully!");
+//    }
+//    
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest) {
         // Find user by username

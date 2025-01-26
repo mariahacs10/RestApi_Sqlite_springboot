@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,71 +34,80 @@ public class FavoriteController {
     private AppUserService userService;
 
     @Autowired
-    private ImageService imageService; // Inject ImageService
+    private ImageService imageService;
 
     @PostMapping("/addFav")
     public ResponseEntity<?> addFavorite(@RequestBody FavoriteRequest request) {
+        // Log the request payload
+        System.out.println("[DEBUG] Received add favorite request: " + request);
+
         // Validate input
         if (request.getImageId() == null || request.getUserId() == null) {
-            return ResponseEntity.badRequest().body("Image ID and User ID are required."); // Bad request if required data is missing
+            System.out.println("[ERROR] Missing Image ID or User ID in request.");
+            return ResponseEntity.badRequest().body("Image ID and User ID are required.");
         }
 
-        // Log request data for debugging
-        System.out.println("Received add favorite request for User ID: " + request.getUserId() +
-                            ", Image ID: " + request.getImageId());
-
-        // Fetch user from the database
+        // Log user and image lookup
+        System.out.println("[DEBUG] Looking up User ID: " + request.getUserId());
         AppUser user = userService.findById(request.getUserId());
         if (user == null) {
-            System.out.println("User not found for ID: " + request.getUserId());
-            return ResponseEntity.status(404).body("User not found."); // Return error if user does not exist
+            System.out.println("[ERROR] User not found for ID: " + request.getUserId());
+            return ResponseEntity.status(404).body("User not found.");
         }
 
-        // Fetch image from the database using imageId
+        System.out.println("[DEBUG] Looking up Image ID: " + request.getImageId());
         All_Images image;
         try {
             image = imageService.findById(request.getImageId());
         } catch (ResourceNotFoundException e) {
-            System.out.println("Image not found for ID: " + request.getImageId());
-            return ResponseEntity.status(404).body("Image not found."); // Return error if image does not exist
+            System.out.println("[ERROR] Image not found for ID: " + request.getImageId());
+            return ResponseEntity.status(404).body("Image not found.");
         }
 
-        // Check if the favorite already exists for this user and image
+        // Check for duplicate favorites
+        System.out.println("[DEBUG] Checking if Image ID: " + request.getImageId() + 
+                           " is already favorited by User ID: " + request.getUserId());
         if (favoriteService.isFavoriteExists(user, image)) {
-            System.out.println("Image already favorited by User ID: " + request.getUserId());
-            return ResponseEntity.status(400).body("This image is already favorited by the user."); // Prevent duplicate favorites
+            System.out.println("[INFO] Image already favorited by User ID: " + request.getUserId());
+            return ResponseEntity.status(400).body("This image is already favorited by the user.");
         }
 
-        // Try adding favorite
+        // Add the favorite
         Favorite favorite = favoriteService.addFavorite(image, user);
-        System.out.println("Favorite added successfully for User ID: " + request.getUserId());
-        return ResponseEntity.ok(favorite); // Success
+        System.out.println("[SUCCESS] Favorite added successfully for User ID: " + request.getUserId() +
+                           " and Image ID: " + request.getImageId());
+        return ResponseEntity.ok(favorite);
     }
-
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<All_Images>> getUserFavorites(@PathVariable Long userId) {
-        // Fetch the user's favorite images
+        // Log the user lookup
+        System.out.println("[DEBUG] Fetching favorites for User ID: " + userId);
         List<All_Images> favorites = favoriteService.getUserFavorites(userId);
 
-        // If no favorites are found, return 404
         if (favorites.isEmpty()) {
+            System.out.println("[INFO] No favorites found for User ID: " + userId);
             return ResponseEntity.status(404).body(null);
         }
 
-        // Return favorite images as AllImagesItem objects
+        System.out.println("[SUCCESS] Favorites retrieved for User ID: " + userId + " - Count: " + favorites.size());
         return ResponseEntity.ok(favorites);
     }
 
     @DeleteMapping("/delete/{userId}/{imageId}")
     public ResponseEntity<?> removeFavorite(@PathVariable Long userId, @PathVariable Long imageId) {
+        // Log the delete request
+        System.out.println("[DEBUG] Received delete request for User ID: " + userId + 
+                           " and Image ID: " + imageId);
         try {
             favoriteService.removeFavorite(userId, imageId);
+            System.out.println("[SUCCESS] Favorite deleted for User ID: " + userId + 
+                               " and Image ID: " + imageId);
             return ResponseEntity.ok("Favorite deleted successfully");
         } catch (ResourceNotFoundException e) {
+            System.out.println("[ERROR] Favorite not found for User ID: " + userId + 
+                               " and Image ID: " + imageId + " - " + e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-    } 
-  
+    }
 }
-

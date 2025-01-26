@@ -1,6 +1,7 @@
 package com.example.artworkapi.domain;
 
 public class FavoriteRequest {
+
     private Long imageId;  // Add imageId to link to an image in the database
     private Long userId;
 
@@ -21,3 +22,4 @@ public class FavoriteRequest {
         this.userId = userId;
     }
 }
+
