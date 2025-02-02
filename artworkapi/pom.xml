@@ -103,6 +103,14 @@
     <artifactId>google-api-client-gson</artifactId>
     <version>1.32.1</version>
     </dependency>
+    
+    <dependency>
+    <groupId>org.assertj</groupId>
+    <artifactId>assertj-core</artifactId>
+    <version>3.24.2</version> <!-- Replace with the latest version -->
+    <scope>test</scope>
+</dependency>
+
 	       
 	</dependencies>
 

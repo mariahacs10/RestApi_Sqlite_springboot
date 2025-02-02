@@ -1,5 +1,4 @@
 package com.example.artworkapi.web;
-
 import java.util.List;
 
 import org.springframework.web.bind.annotation.CrossOrigin;

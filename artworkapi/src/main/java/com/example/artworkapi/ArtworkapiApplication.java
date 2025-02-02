@@ -47,18 +47,61 @@ import jakarta.annotation.PostConstruct;
   
 */
 
+//@SpringBootApplication
+//public class ArtworkapiApplication implements CommandLineRunner {
+//
+//    private static final Logger logger = LoggerFactory.getLogger(ArtworkapiApplication.class);
+//
+//    private final All_Images_Repository allImagesRepository;
+//    private final ImageUrlsConfig imageUrlsConfig;
+//    private final ApiKeyService apiKeyService;
+//
+//    public ArtworkapiApplication(All_Images_Repository allImagesRepository, ImageUrlsConfig imageUrlsConfig, ApiKeyService apiKeyService) {
+//        this.allImagesRepository = allImagesRepository;
+//        this.imageUrlsConfig = imageUrlsConfig;
+//        this.apiKeyService = apiKeyService;
+//    }
+//
+//    public static void main(String[] args) {
+//        SpringApplication.run(ArtworkapiApplication.class, args);
+//    }
+//
+//    @PostConstruct
+//    public void initApiKeys() {
+//        String apiKey = apiKeyService.generateApiKey();
+//        System.out.println("Generated API key: " + apiKey);
+//    }
+//
+//    @Override
+//    public void run(String... args) {
+//        // Save anime images
+//        imageUrlsConfig.getAnime().forEach(image -> saveImageIfNotExists(
+//                image.getUrl(), image.getDescription(), image.getCategory()));
+//
+//        // Save JJK images
+//        imageUrlsConfig.getJjk().forEach(image -> saveImageIfNotExists(
+//                image.getUrl(), image.getDescription(), image.getCategory()));
+//    }
+//
+//    private void saveImageIfNotExists(String imageUrl, String description, String category) {
+//        if (!allImagesRepository.findByAllImageUrl(imageUrl).isPresent()) {
+//            All_Images newImage = new All_Images(null, imageUrl, description, category);
+//            allImagesRepository.save(newImage);
+//        }
+//    }
+//}
+
+
 @SpringBootApplication
 public class ArtworkapiApplication implements CommandLineRunner {
-
     private static final Logger logger = LoggerFactory.getLogger(ArtworkapiApplication.class);
-
+    
     private final All_Images_Repository allImagesRepository;
-    private final ImageUrlsConfig imageUrlsConfig;
     private final ApiKeyService apiKeyService;
 
-    public ArtworkapiApplication(All_Images_Repository allImagesRepository, ImageUrlsConfig imageUrlsConfig, ApiKeyService apiKeyService) {
+    // Remove ImageUrlsConfig from constructor since we no longer need it
+    public ArtworkapiApplication(All_Images_Repository allImagesRepository, ApiKeyService apiKeyService) {
         this.allImagesRepository = allImagesRepository;
-        this.imageUrlsConfig = imageUrlsConfig;
         this.apiKeyService = apiKeyService;
     }
 
@@ -69,24 +112,16 @@ public class ArtworkapiApplication implements CommandLineRunner {
     @PostConstruct
     public void initApiKeys() {
         String apiKey = apiKeyService.generateApiKey();
-        System.out.println("Generated API key: " + apiKey);
+        logger.info("Generated API key: {}", apiKey);
     }
 
     @Override
     public void run(String... args) {
-        // Save anime images
-        imageUrlsConfig.getAnime().forEach(image -> saveImageIfNotExists(
-                image.getUrl(), image.getDescription(), image.getCategory()));
-
-        // Save JJK images
-        imageUrlsConfig.getJjk().forEach(image -> saveImageIfNotExists(
-                image.getUrl(), image.getDescription(), image.getCategory()));
-    }
-
-    private void saveImageIfNotExists(String imageUrl, String description, String category) {
-        if (!allImagesRepository.findByAllImageUrl(imageUrl).isPresent()) {
-            All_Images newImage = new All_Images(null, imageUrl, description, category);
-            allImagesRepository.save(newImage);
-        }
+        // Check if database is empty, log the current state
+        long imageCount = allImagesRepository.count();
+        logger.info("Current image count in database: {}", imageCount);
+        
+        // We no longer need the image initialization code since data is managed through the database
+        // Remove the imageUrlsConfig.getAnime() and getJjk() calls
     }
 }
