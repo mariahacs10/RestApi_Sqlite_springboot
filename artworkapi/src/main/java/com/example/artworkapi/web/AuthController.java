@@ -83,7 +83,8 @@ public class AuthController {
 	
 	     // Create the reset password link
 	     String resetLink = "https://artworkdockerimage-v1.onrender.com/api/auth/reset-password?token=" + token;
-
+	    // String resetLink = "http://192.168.68.118:8686/api/auth/reset-password?token=" + token;
+	     
 	     // Prepare email content
 	     String content = "To reset your password, please click the following link: <a href=\"" + resetLink + "\">Reset Password</a>";
 	
